@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output method="text"/>
+  <xsl:template match="/document">
+    <xsl:variable name="cols">
+      <xsl:value-of select="@width"/>
+    </xsl:variable>
+    <xsl:variable name="newline">
+<xsl:text>
+</xsl:text>
+    </xsl:variable>
+    <xsl:for-each select="paragraph">
+      <xsl:value-of select="$newline"/>
+      <xsl:call-template name="wrap-row">
+	<xsl:with-param name="cols">
+	  <xsl:value-of select="$cols"/>
+	</xsl:with-param>
+	<xsl:with-param name="col">
+	  <xsl:text>1</xsl:text>
+	</xsl:with-param>
+	<xsl:with-param name="index">
+	  <xsl:text>1</xsl:text>
+	</xsl:with-param>
+	<xsl:with-param name="newline">
+	  <xsl:value-of select="$newline"/>
+	</xsl:with-param>
+      </xsl:call-template>
+      <xsl:value-of select="$newline"/>
+    </xsl:for-each>
+  </xsl:template>
+  <xsl:template name="wrap-row">
+    <xsl:param name="cols"/>
+    <xsl:param name="col"/>
+    <xsl:param name="index"/>
+    <xsl:param name="newline"/>
+    <xsl:choose>
+      <xsl:when test="1 &lt;= $index and $index &lt;= count(word)">
+	<xsl:variable name="str">
+	  <xsl:value-of select="normalize-space(word[position()=$index])"/>
+	</xsl:variable>
+	<xsl:variable name="len">
+	  <xsl:value-of select="string-length($str)"/>
+	</xsl:variable>
+	<xsl:variable name="addCol">
+	  <xsl:value-of select="$col + $len"/>
+	</xsl:variable>
+	<xsl:variable name="newCol">
+	  <xsl:choose>
+	    <xsl:when test="$addCol &gt; $cols">
+	      <xsl:text>1</xsl:text>
+	    </xsl:when>
+	    <xsl:otherwise>
+	      <xsl:value-of select="$addCol + $len"/>
+	    </xsl:otherwise>
+	  </xsl:choose>
+	</xsl:variable>
+	<xsl:if test="$addCol &gt; $cols">
+	  <xsl:value-of select="$newline"/>
+	</xsl:if>
+	<xsl:value-of select="$str"/>
+	<xsl:text> </xsl:text>
+	<xsl:call-template name="wrap-row">
+	  <xsl:with-param name="cols">
+	    <xsl:value-of select="$cols"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="col">
+	    <xsl:value-of select="$newCol"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="index">
+	    <xsl:value-of select="$index + 1"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="newline">
+	    <xsl:value-of select="$newline"/>
+	  </xsl:with-param>
+	</xsl:call-template>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+</xsl:stylesheet>
