@@ -18,80 +18,218 @@ Copyright © (C) 2012 Emory Hughes Merryman, III!
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output method="text"/>
+  <xsl:output method="xml" indent="yes"/>
   <xsl:template match="/document">
-    <xsl:variable name="cols">
-      <xsl:value-of select="@width"/>
-    </xsl:variable>
-    <xsl:variable name="newline">
-<xsl:text>
-</xsl:text>
-    </xsl:variable>
-    <xsl:for-each select="paragraph">
-      <xsl:value-of select="$newline"/>
-      <xsl:call-template name="wrap-row">
-	<xsl:with-param name="cols">
-	  <xsl:value-of select="$cols"/>
+    <xsl:element name="document">
+      <xsl:call-template name="wrap">
+	<xsl:with-param name="mode">
+	  <xsl:text>2</xsl:text>
 	</xsl:with-param>
-	<xsl:with-param name="col">
+	<xsl:with-param name="grouping-element">
+	  <xsl:text>block</xsl:text>
+	</xsl:with-param>
+	<xsl:with-param name="target-element">
+	  <xsl:text>paragraph</xsl:text>
+	</xsl:with-param>
+	<xsl:with-param name="item-element">
+	  <xsl:text>word</xsl:text>
+	</xsl:with-param>
+	<xsl:with-param name="target-index">
 	  <xsl:text>1</xsl:text>
 	</xsl:with-param>
-	<xsl:with-param name="index">
+	<xsl:with-param name="item-index">
 	  <xsl:text>1</xsl:text>
 	</xsl:with-param>
-	<xsl:with-param name="newline">
-	  <xsl:value-of select="$newline"/>
+	<xsl:with-param name="group-size">
+	  <xsl:text>1000</xsl:text>
+	</xsl:with-param>
+	<xsl:with-param name="buffer">
+	  <xsl:text>0</xsl:text>
 	</xsl:with-param>
       </xsl:call-template>
-      <xsl:value-of select="$newline"/>
-    </xsl:for-each>
+    </xsl:element>
   </xsl:template>
-  <xsl:template name="wrap-row">
-    <xsl:param name="cols"/>
-    <xsl:param name="col"/>
-    <xsl:param name="index"/>
-    <xsl:param name="newline"/>
+  <xsl:template name="wrap">
+    <xsl:param name="mode"/>
+    <xsl:param name="grouping-element"/>
+    <xsl:param name="target-element"/>
+    <xsl:param name="item-element"/>
+    <xsl:param name="target-index"/>
+    <xsl:param name="item-index"/>
+    <xsl:param name="group-size"/>
+    <xsl:param name="buffer"/>
+    <xsl:variable name="target-count">
+      <xsl:value-of select="count(*[$target-element=name()])"/>
+    </xsl:variable>
+    <xsl:variable name="item-size">
+      <xsl:value-of select="count(*[$target-element=name() and $target-index=position()]/*[$item-element=name()])"/>
+    </xsl:variable>
+    <xsl:variable name="item-add1">
+      <xsl:value-of select="$item-index + $item-size"/>
+    </xsl:variable>
+    <xsl:variable name="item-add2">
+      <xsl:value-of select="$item-add1 + $buffer"/>
+    </xsl:variable>
+    <xsl:variable name="item-add3">
+      <xsl:choose>
+	<xsl:when test="1 &lt;= $item-add2 and $item-add2 &lt;= $group-size">
+	  <xsl:value-of select="$item-add2"/>
+	</xsl:when>
+	<xsl:when test="$item-add2 &gt; $group-size">
+	  <xsl:text>1</xsl:text>
+	</xsl:when>
+	<xsl:otherwise>
+	  <xsl:message terminate="yes">
+	    <xsl:text>WTF</xsl:text>
+	  </xsl:message>
+	</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:message terminate="no">
+      <xsl:text>target-index=</xsl:text>
+      <xsl:value-of select="$target-index"/>
+      <xsl:text>, target-count=</xsl:text>
+      <xsl:value-of select="$target-count"/>
+      <xsl:text>, item-size=</xsl:text>
+      <xsl:value-of select="$item-size"/>
+      <xsl:text>, group-size=</xsl:text>
+      <xsl:value-of select="$group-size"/>
+      <xsl:text>, item-index=</xsl:text>
+      <xsl:value-of select="$item-index"/>
+      <xsl:text>, item-add2=</xsl:text>
+      <xsl:value-of select="$item-add2"/>
+      <xsl:text>, mode=</xsl:text>
+      <xsl:value-of select="$mode"/>
+    </xsl:message>
     <xsl:choose>
-      <xsl:when test="1 &lt;= $index and $index &lt;= count(word)">
-	<xsl:variable name="str">
-	  <xsl:value-of select="normalize-space(word[position()=$index])"/>
-	</xsl:variable>
-	<xsl:variable name="len">
-	  <xsl:value-of select="string-length($str)"/>
-	</xsl:variable>
-	<xsl:variable name="addCol">
-	  <xsl:value-of select="$col + $len"/>
-	</xsl:variable>
-	<xsl:variable name="newCol">
-	  <xsl:choose>
-	    <xsl:when test="$addCol &gt; $cols">
+      <xsl:when test="$target-index &gt; $target-count">
+	<xsl:message terminate="no">
+	  <xsl:text>terminate</xsl:text>
+	</xsl:message>
+      </xsl:when>
+      <xsl:when test="2=$mode and 1=$item-index">
+	<xsl:element name="{$grouping-element}">
+	  <xsl:copy-of select="*[$target-element=name() and $target-index=position()]"/>
+	  <xsl:call-template name="wrap">
+	    <xsl:with-param name="mode">
 	      <xsl:text>1</xsl:text>
-	    </xsl:when>
-	    <xsl:otherwise>
-	      <xsl:value-of select="$addCol + $len"/>
-	    </xsl:otherwise>
-	  </xsl:choose>
-	</xsl:variable>
-	<xsl:if test="$addCol &gt; $cols">
-	  <xsl:value-of select="$newline"/>
-	</xsl:if>
-	<xsl:value-of select="$str"/>
-	<xsl:text> </xsl:text>
-	<xsl:call-template name="wrap-row">
-	  <xsl:with-param name="cols">
-	    <xsl:value-of select="$cols"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="grouping-element">
+	      <xsl:value-of select="$grouping-element"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="target-element">
+	      <xsl:value-of select="$target-element"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="item-element">
+	      <xsl:value-of select="$item-element"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="target-index">
+	      <xsl:value-of select="$target-index + 1"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="item-index">
+	      <xsl:value-of select="$item-add3"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="group-size">
+	      <xsl:value-of select="$group-size"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="buffer">
+	      <xsl:value-of select="$buffer"/>
+	    </xsl:with-param>
+	  </xsl:call-template>
+	</xsl:element>
+	<xsl:call-template name="wrap">
+	  <xsl:with-param name="mode">
+	    <xsl:text>2</xsl:text>
 	  </xsl:with-param>
-	  <xsl:with-param name="col">
-	    <xsl:value-of select="$newCol"/>
+	  <xsl:with-param name="grouping-element">
+	    <xsl:value-of select="$grouping-element"/>
 	  </xsl:with-param>
-	  <xsl:with-param name="index">
-	    <xsl:value-of select="$index + 1"/>
+	  <xsl:with-param name="target-element">
+	    <xsl:value-of select="$target-element"/>
 	  </xsl:with-param>
-	  <xsl:with-param name="newline">
-	    <xsl:value-of select="$newline"/>
+	  <xsl:with-param name="item-element">
+	    <xsl:value-of select="$item-element"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="target-index">
+	    <xsl:value-of select="$target-index + 1"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="item-index">
+	    <xsl:value-of select="$item-add3"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="group-size">
+	    <xsl:value-of select="$group-size"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="buffer">
+	    <xsl:value-of select="$buffer"/>
 	  </xsl:with-param>
 	</xsl:call-template>
       </xsl:when>
+      <xsl:when test="1 &lt;= $item-add2 and $item-add2 &lt;= $group-size">
+	<xsl:if test="1=$mode">
+	  <xsl:copy-of select="*[$target-element=name() and $target-index=position()]"/>
+	</xsl:if>
+	<xsl:call-template name="wrap">
+	  <xsl:with-param name="mode">
+	    <xsl:value-of select="$mode"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="grouping-element">
+	    <xsl:value-of select="$grouping-element"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="target-element">
+	    <xsl:value-of select="$target-element"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="item-element">
+	    <xsl:value-of select="$item-element"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="target-index">
+	    <xsl:value-of select="$target-index + 1"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="item-index">
+	    <xsl:value-of select="$item-add3"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="group-size">
+	    <xsl:value-of select="$group-size"/>
+	  </xsl:with-param>
+	  <xsl:with-param name="buffer">
+	    <xsl:value-of select="$buffer"/>
+	  </xsl:with-param>
+	</xsl:call-template>
+      </xsl:when>
+      <xsl:when test="$item-add2 &gt; $group-size">
+	<xsl:if test="2=$mode">
+	  <xsl:call-template name="wrap">
+	    <xsl:with-param name="mode">
+	      <xsl:value-of select="$mode"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="grouping-element">
+	      <xsl:value-of select="$grouping-element"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="target-element">
+	      <xsl:value-of select="$target-element"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="item-element">
+	      <xsl:value-of select="$item-element"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="target-index">
+	      <xsl:value-of select="$target-index"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="item-index">
+	      <xsl:value-of select="$item-add3"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="group-size">
+	      <xsl:value-of select="$group-size"/>
+	    </xsl:with-param>
+	    <xsl:with-param name="buffer">
+	      <xsl:value-of select="$buffer"/>
+	    </xsl:with-param>
+	  </xsl:call-template>
+	</xsl:if>
+      </xsl:when>
+      <xsl:otherwise>
+	<xsl:message terminate="yes">
+	  <xsl:text>WTF</xsl:text>
+	</xsl:message>
+      </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 </xsl:stylesheet>
