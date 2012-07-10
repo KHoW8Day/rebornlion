@@ -21,33 +21,36 @@ Copyright © (C) 2012 Emory Hughes Merryman, III!
   <xsl:output method="xml" indent="yes"/>
   <xsl:template match="/document">
     <xsl:element name="document">
-      <xsl:call-template name="wrap">
-	<xsl:with-param name="mode">
-	  <xsl:text>2</xsl:text>
-	</xsl:with-param>
-	<xsl:with-param name="grouping-element">
-	  <xsl:text>block</xsl:text>
-	</xsl:with-param>
-	<xsl:with-param name="target-element">
-	  <xsl:text>paragraph</xsl:text>
-	</xsl:with-param>
-	<xsl:with-param name="item-element">
-	  <xsl:text>word</xsl:text>
-	</xsl:with-param>
-	<xsl:with-param name="target-index">
-	  <xsl:text>1</xsl:text>
-	</xsl:with-param>
-	<xsl:with-param name="item-index">
-	  <xsl:text>1</xsl:text>
-	</xsl:with-param>
-	<xsl:with-param name="group-size">
-	  <xsl:text>1000</xsl:text>
-	</xsl:with-param>
-	<xsl:with-param name="buffer">
-	  <xsl:text>0</xsl:text>
-	</xsl:with-param>
-      </xsl:call-template>
+      <xsl:apply-templates select="paragraph"/>
     </xsl:element>
+  </xsl:template>
+  <xsl:template match="paragraph">
+    <xsl:call-template name="wrap">
+      <xsl:with-param name="mode">
+	<xsl:text>2</xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="grouping-element">
+	<xsl:text>line</xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="target-element">
+	<xsl:text>word</xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="item-element">
+	<xsl:text></xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="target-index">
+	<xsl:text>1</xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="item-index">
+	<xsl:text>1</xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="group-size">
+	<xsl:text>80</xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="buffer">
+	  <xsl:text>0</xsl:text>
+      </xsl:with-param>
+    </xsl:call-template>
   </xsl:template>
   <xsl:template name="wrap">
     <xsl:param name="mode"/>
@@ -62,7 +65,14 @@ Copyright © (C) 2012 Emory Hughes Merryman, III!
       <xsl:value-of select="count(*[$target-element=name()])"/>
     </xsl:variable>
     <xsl:variable name="item-size">
-      <xsl:value-of select="count(*[$target-element=name() and $target-index=position()]/*[$item-element=name()])"/>
+      <xsl:choose>
+	<xsl:when test="''=normalize-space($item-element)">
+	  <xsl:value-of select="string-length(normalize-space(*[$target-element=name() and $target-index=position()]))"/>
+	</xsl:when>
+	<xsl:otherwise>
+	  <xsl:value-of select="count(*[$target-element=name() and $target-index=position()]/*[$item-element=name()])"/>
+	</xsl:otherwise>
+      </xsl:choose>
     </xsl:variable>
     <xsl:variable name="item-add1">
       <xsl:value-of select="$item-index + $item-size"/>
@@ -85,27 +95,8 @@ Copyright © (C) 2012 Emory Hughes Merryman, III!
 	</xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    <xsl:message terminate="no">
-      <xsl:text>target-index=</xsl:text>
-      <xsl:value-of select="$target-index"/>
-      <xsl:text>, target-count=</xsl:text>
-      <xsl:value-of select="$target-count"/>
-      <xsl:text>, item-size=</xsl:text>
-      <xsl:value-of select="$item-size"/>
-      <xsl:text>, group-size=</xsl:text>
-      <xsl:value-of select="$group-size"/>
-      <xsl:text>, item-index=</xsl:text>
-      <xsl:value-of select="$item-index"/>
-      <xsl:text>, item-add2=</xsl:text>
-      <xsl:value-of select="$item-add2"/>
-      <xsl:text>, mode=</xsl:text>
-      <xsl:value-of select="$mode"/>
-    </xsl:message>
     <xsl:choose>
       <xsl:when test="$target-index &gt; $target-count">
-	<xsl:message terminate="no">
-	  <xsl:text>terminate</xsl:text>
-	</xsl:message>
       </xsl:when>
       <xsl:when test="2=$mode and 1=$item-index">
 	<xsl:element name="{$grouping-element}">
