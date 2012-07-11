@@ -1,0 +1,177 @@
+<?xml version="1.0"?>
+<!--
+Copyright © (C) 2012 Emory Hughes Merryman, III!
+
+    This file is part of rebornlion.
+
+    rebornlion is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    rebornlion is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output method="xml" indent="yes"/>
+  <xsl:template match="@*|node()">
+    <xsl:copy>
+      <xsl:apply-templates select="@*|node()"/>
+    </xsl:copy>
+  </xsl:template>
+  <xsl:template match="paragraph">
+    <xsl:call-template name="wrap-paragraph">
+      <xsl:with-param name="element">
+	<xsl:element name="paragraph">
+	  <xsl:attribute name="cols">
+	    <xsl:text>80</xsl:text>
+	  </xsl:attribute>
+	  <xsl:apply-templates select="word"/>
+	</xsl:element>
+      </xsl:with-param>
+      <xsl:with-param name="index">
+	<xsl:text>1</xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="position">
+	<xsl:text>1</xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="mode">
+	<xsl:text>1</xsl:text>
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+  <xsl:template name="wrap-paragraph">
+    <xsl:param name="element"/>
+    <xsl:param name="index"/>
+    <xsl:param name="position"/>
+    <xsl:param name="mode"/>
+    <xsl:copy-of select="$element/word[1=position()]"/>
+    <xsl:message terminate="yes"><xsl:text>hi</xsl:text>
+    </xsl:message>
+    <xsl:variable name="words">
+      <xsl:value-of select="count($element/word)"/>
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="1 &lt;= $index and $index &lt;= $words">
+	<xsl:variable name="letters">
+	  <xsl:value-of select="count($element/word[$index=position()]/letter)"/>
+	</xsl:variable>
+	<xsl:variable name="position1">
+	  <xsl:value-of select="$positions + $letters + 1"/>
+	</xsl:variable>
+	<xsl:choose>
+	  <xsl:when test="1 = $mode">
+	    <xsl:element name="line">
+	      <xsl:copy-of select="$element/word[$index=position()]/letter"/>
+	      <xsl:call-template name="wrap-paragraph">
+		<xsl:with-param name="element">
+		  <xsl:value-of select="$element"/>
+		</xsl:with-param>
+		<xsl:with-param name="index">
+		  <xsl:value-of select="$index+1"/>
+		</xsl:with-param>
+		<xsl:with-param name="position">
+		  <xsl:value-of select="$position1"/>
+		</xsl:with-param>
+		<xsl:with-param name="mode">
+		  <xsl:text>2</xsl:text>
+		</xsl:with-param>
+	      </xsl:call-template>
+	    </xsl:element>
+	    <xsl:copy-of select="$element/word[$index=position()]/letter"/>
+	    <xsl:call-template name="wrap-paragraph">
+	      <xsl:with-param name="element">
+		<xsl:value-of select="$element"/>
+	      </xsl:with-param>
+	      <xsl:with-param name="index">
+		<xsl:value-of select="$index+1"/>
+	      </xsl:with-param>
+	      <xsl:with-param name="position">
+		<xsl:value-of select="$position1"/>
+	      </xsl:with-param>
+	      <xsl:with-param name="mode">
+		<xsl:text>3</xsl:text>
+	      </xsl:with-param>
+	    </xsl:call-template>
+	  </xsl:when>
+	  <xsl:when test="1 &lt;= $position1 and $position1 &lt;= @cols">
+	    <xsl:choose>
+	      <xsl:when test="2=mode">
+		<xsl:copy-of select="$element/word[$index=position()]/letter"/>
+	      </xsl:when>
+	    </xsl:choose>
+	    <xsl:call-template name="wrap-paragraph">
+	      <xsl:with-param name="element">
+		<xsl:value-of select="$element"/>
+	      </xsl:with-param>
+	      <xsl:with-param name="index">
+		<xsl:value-of select="$index+1"/>
+	      </xsl:with-param>
+	      <xsl:with-param name="position">
+		<xsl:value-of select="$position1"/>
+	      </xsl:with-param>
+	      <xsl:with-param name="mode">
+		<xsl:value-of select="$mode"/>
+	      </xsl:with-param>
+	    </xsl:call-template>
+	  </xsl:when>
+	  <xsl:when test="$position1 &gt; @cols">
+	    <xsl:choose>
+	      <xsl:when test="3=mode">
+		<xsl:call-template name="wrap-paragraph">
+		  <xsl:with-param name="element">
+		    <xsl:value-of select="$element"/>
+		  </xsl:with-param>
+		  <xsl:with-param name="index">
+		    <xsl:value-of select="$index"/>
+		  </xsl:with-param>
+		  <xsl:with-param name="position">
+		    <xsl:value-of select="$position"/>
+		  </xsl:with-param>
+		  <xsl:with-param name="mode">
+		    <xsl:text>1</xsl:text>
+		  </xsl:with-param>
+		</xsl:call-template>
+	      </xsl:when>
+	    </xsl:choose>
+	  </xsl:when>
+	</xsl:choose>
+      </xsl:when>
+      <xsl:when test="$index = $words + 1"/>
+      <xsl:otherwise>
+	<xsl:message terminate="yes">
+	  <xsl:text>index=</xsl:text>
+	  <xsl:value-of select="$index"/>
+	</xsl:message>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  <xsl:template match="word">
+    <xsl:element name="word">
+      <xsl:call-template name="letterize">
+	<xsl:with-param name="index">
+	  <xsl:text>1</xsl:text>
+	</xsl:with-param>
+      </xsl:call-template>
+    </xsl:element>
+  </xsl:template>
+  <xsl:template name="letterize">
+    <xsl:param name="index"/>
+    <xsl:variable name="wordlength">
+      <xsl:value-of select="string-length(normalize-space())"/>
+    </xsl:variable>
+    <xsl:if test="$index &lt;= $wordlength">
+      <xsl:variable name="letter">
+	<xsl:value-of select="substring(normalize-space(),$index,1)"/>
+      </xsl:variable>
+      <xsl:element name="letter">
+	<xsl:value-of select="$letter"/>
+      </xsl:element>
+    </xsl:if>
+  </xsl:template>
+</xsl:stylesheet>
